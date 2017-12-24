@@ -10,26 +10,24 @@ ENV LANG C.UTF-8
 ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
 ENV JAVA_VERSION 7u95
 ENV JAVA_DEBIAN_VERSION 7u95-2.6.4-1~deb8u1
+ENV DEBIAN_FRONTEND noninteractive
 
 ########
 # Java
 ########
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+RUN apt-get -y install python-software-properties
+RUN apt-get -y install apt-file
+RUN apt-file update
+RUN apt-get -y install software-properties-common
+RUN echo "deb http://http.debian.net/debian jessie-backports main" > /etc/apt/sources.list.d/jessie-backports.list
+RUN apt-get update && apt-get install --fix-missing
+RUN apt-get install -y -t jessie-backports  openjdk-8-jre-headless ca-certificates-java
+RUN apt-get install -y openjdk-8-jdk
 
-RUN apt-get update && apt-get install -y unzip && rm -rf /var/lib/apt/lists/*
+# install manually all the missing libraries
+RUN apt-get install -y gconf-service libasound2 libatk1.0-0 libcairo2 libcups2 libfontconfig1 libgdk-pixbuf2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libxss1 fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils
 
-# add a simple script that can auto-detect the appropriate JAVA_HOME value
-# based on whether the JDK or only the JRE is installed
-RUN { \
-		echo '#!/bin/bash'; \
-		echo 'set -e'; \
-		echo; \
-		echo 'dirname "$(dirname "$(readlink -f "$(which javac || which java)")")"'; \
-	} > /usr/local/bin/docker-java-home \
-	&& chmod +x /usr/local/bin/docker-java-home
-
-RUN set -x \
-	&& apt-get update \
-	&& apt-get install -y \
-		openjdk-7-jdk="$JAVA_DEBIAN_VERSION" \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& [ "$JAVA_HOME" = "$(docker-java-home)" ]
+# install chrome
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN dpkg -i google-chrome-stable_current_amd64.deb; apt-get -fy install
